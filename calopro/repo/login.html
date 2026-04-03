@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#10b981"/>
+<title>CaloriePro — Login</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+body{
+  background:#060d18;
+  color:#e2e8f0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100dvh;
+  padding:20px;
+  position:relative;
+  overflow:hidden;
+}
+
+/* Background glow */
+body::before{
+  content:'';
+  position:fixed;
+  top:-30%;left:-20%;
+  width:600px;height:600px;
+  background:radial-gradient(circle,rgba(16,185,129,.12) 0%,transparent 70%);
+  pointer-events:none;
+}
+body::after{
+  content:'';
+  position:fixed;
+  bottom:-20%;right:-20%;
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(59,130,246,.1) 0%,transparent 70%);
+  pointer-events:none;
+}
+
+.box{
+  width:100%;
+  max-width:420px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:24px;
+  padding:36px 28px;
+  backdrop-filter:blur(20px);
+  position:relative;
+  z-index:1;
+}
+
+/* Logo */
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:28px;
+  justify-content:center;
+}
+.logo-icon{
+  width:42px;height:42px;
+  background:linear-gradient(135deg,#059669,#10b981);
+  border-radius:13px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;
+  box-shadow:0 4px 18px rgba(16,185,129,.4);
+}
+.logo-name{
+  font-size:22px;font-weight:900;letter-spacing:-.7px;
+  background:linear-gradient(135deg,#059669,#10b981);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+/* Tabs */
+.tabs{
+  display:flex;
+  background:rgba(255,255,255,.05);
+  border-radius:12px;
+  padding:4px;
+  margin-bottom:24px;
+}
+.tab{
+  flex:1;padding:9px;border-radius:9px;
+  font-size:13px;font-weight:700;
+  border:none;cursor:pointer;
+  background:none;color:#7a9abb;
+  transition:all .2s;
+}
+.tab.on{
+  background:rgba(16,185,129,.15);
+  color:#34d399;
+  box-shadow:0 2px 8px rgba(16,185,129,.15);
+}
+
+/* Form */
+.field{margin-bottom:14px}
+.lbl{
+  display:block;font-size:11px;font-weight:700;
+  letter-spacing:.8px;text-transform:uppercase;
+  color:#3a5878;margin-bottom:6px;
+}
+.inp{
+  width:100%;
+  background:rgba(255,255,255,.06);
+  border:1.5px solid rgba(255,255,255,.08);
+  border-radius:11px;
+  padding:13px 15px;
+  color:#e2e8f0;font-size:15px;
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+  font-family:inherit;
+}
+.inp:focus{
+  border-color:#10b981;
+  box-shadow:0 0 0 3px rgba(16,185,129,.14);
+}
+.inp::placeholder{color:#3a5878}
+
+/* Buttons */
+.btn-pr{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,#059669,#10b981);
+  color:#fff;border:none;border-radius:12px;
+  font-size:15px;font-weight:700;
+  cursor:pointer;margin-top:4px;
+  transition:transform .18s,box-shadow .18s;
+  box-shadow:0 4px 18px rgba(16,185,129,.35);
+  font-family:inherit;
+}
+.btn-pr:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(16,185,129,.45)}
+.btn-pr:active{transform:scale(.97)}
+.btn-pr:disabled{opacity:.5;cursor:default;transform:none}
+
+.btn-gh{
+  width:100%;padding:13px;
+  background:rgba(255,255,255,.06);
+  border:1.5px solid rgba(255,255,255,.1);
+  color:#e2e8f0;border-radius:12px;
+  font-size:14px;font-weight:700;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:all .18s;
+  font-family:inherit;
+}
+.btn-gh:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)}
+.btn-gh:active{transform:scale(.97)}
+
+/* Divider */
+.divider{
+  display:flex;align-items:center;gap:12px;
+  margin:18px 0;color:#3a5878;font-size:12px;font-weight:600;
+}
+.divider::before,.divider::after{
+  content:'';flex:1;height:1px;
+  background:rgba(255,255,255,.07);
+}
+
+/* Error / Success */
+.msg{
+  padding:11px 14px;border-radius:10px;
+  font-size:13px;font-weight:500;
+  margin-bottom:14px;display:none;
+}
+.msg.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171;}
+.msg.ok{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#34d399;}
+.msg.show{display:block}
+
+/* Forgot */
+.forgot{
+  text-align:right;margin-top:-8px;margin-bottom:14px;
+}
+.forgot a{
+  font-size:12px;color:#7a9abb;text-decoration:none;font-weight:600;
+}
+.forgot a:hover{color:#34d399}
+
+/* Footer */
+.foot{
+  text-align:center;margin-top:20px;
+  font-size:12px;color:#3a5878;
+}
+
+/* Loading spinner */
+.spin{
+  width:18px;height:18px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;
+  animation:spin .7s linear infinite;
+  display:inline-block;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="box">
+
+  <div class="logo">
+    <div class="logo-icon">🥗</div>
+    <span class="logo-name">CaloriePro</span>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab on" id="tab-login" onclick="switchTab('login')">Sign In</button>
+    <button class="tab" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+  </div>
+
+  <!-- Message -->
+  <div class="msg" id="msg"></div>
+
+  <!-- Login Form -->
+  <div id="form-login">
+    <div class="field">
+      <label class="lbl">Email</label>
+      <input class="inp" type="email" id="login-email" placeholder="you@example.com"/>
+    </div>
+    <div class="field">
+      <label class="lbl">Password</label>
+      <input class="inp" type="password" id="login-pass" placeholder="••••••••"/>
+    </div>
+    <div class="forgot"><a href="#" onclick="forgotPassword()">Forgot password?</a></div>
+    <button class="btn-pr" id="btn-login" onclick="doLogin()">Sign In</button>
+
+    <div class="divider">or</div>
+
+    <button class="btn-gh" onclick="doGithub()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+      </svg>
+      Continue with GitHub
+    </button>
+  </div>
+
+  <!-- Signup Form -->
+  <div id="form-signup" style="display:none">
+    <div class="field">
+      <label class="lbl">Email</label>
+      <input class="inp" type="email" id="signup-email" placeholder="you@example.com"/>
+    </div>
+    <div class="field">
+      <label class="lbl">Password</label>
+      <input class="inp" type="password" id="signup-pass" placeholder="Min 6 characters"/>
+    </div>
+    <div class="field">
+      <label class="lbl">Confirm Password</label>
+      <input class="inp" type="password" id="signup-pass2" placeholder="••••••••"/>
+    </div>
+    <button class="btn-pr" id="btn-signup" onclick="doSignup()">Create Account</button>
+
+    <div class="divider">or</div>
+
+    <button class="btn-gh" onclick="doGithub()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+      </svg>
+      Continue with GitHub
+    </button>
+  </div>
+
+  <div class="foot">🔒 Your data stays private & secure</div>
+</div>
+
+<script>
+const SUPABASE_URL  = "https://momnfuwtgzsatptkntgp.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vbW5mdXd0Z3pzYXRwdGtudGdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNDMxMjYsImV4cCI6MjA5MDYxOTEyNn0.lcuaL2wlDJ5mX5NOBq_O8Myt6t3rVAl2_nyMRMoklko";
+
+const { createClient } = supabase;
+const DB = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// Check if already logged in
+DB.auth.getSession().then(({ data }) => {
+  if (data.session) window.location.href = '/';
+});
+
+// Auth state listener
+DB.auth.onAuthStateChange((event, session) => {
+  if (session) window.location.href = '/';
+});
+
+function switchTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('form-login').style.display  = isLogin ? 'block' : 'none';
+  document.getElementById('form-signup').style.display = isLogin ? 'none'  : 'block';
+  document.getElementById('tab-login').classList.toggle('on', isLogin);
+  document.getElementById('tab-signup').classList.toggle('on', !isLogin);
+  hideMsg();
+}
+
+function showMsg(text, type) {
+  const m = document.getElementById('msg');
+  m.textContent = text;
+  m.className = 'msg show ' + type;
+}
+function hideMsg() {
+  document.getElementById('msg').className = 'msg';
+}
+
+function setLoading(btnId, on) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = on;
+  btn.innerHTML = on ? '<span class="spin"></span>' : (btnId === 'btn-login' ? 'Sign In' : 'Create Account');
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  if (!email || !pass) return showMsg('Please fill all fields.', 'err');
+
+  setLoading('btn-login', true);
+  const { error } = await DB.auth.signInWithPassword({ email, password: pass });
+  setLoading('btn-login', false);
+
+  if (error) return showMsg(error.message, 'err');
+  showMsg('Signing in...', 'ok');
+}
+
+async function doSignup() {
+  const email = document.getElementById('signup-email').value.trim();
+  const pass  = document.getElementById('signup-pass').value;
+  const pass2 = document.getElementById('signup-pass2').value;
+
+  if (!email || !pass || !pass2) return showMsg('Please fill all fields.', 'err');
+  if (pass.length < 6) return showMsg('Password must be at least 6 characters.', 'err');
+  if (pass !== pass2) return showMsg('Passwords do not match.', 'err');
+
+  setLoading('btn-signup', true);
+  const { error } = await DB.auth.signUp({
+    email, password: pass,
+    options: { emailRedirectTo: 'https://calorie-pro.vercel.app/' }
+  });
+  setLoading('btn-signup', false);
+
+  if (error) return showMsg(error.message, 'err');
+  showMsg('✅ Check your email to confirm your account!', 'ok');
+}
+
+async function doGithub() {
+  const { error } = await DB.auth.signInWithOAuth({
+    provider: 'github',
+    options: { redirectTo: 'https://calorie-pro.vercel.app/' }
+  });
+  if (error) showMsg(error.message, 'err');
+}
+
+async function forgotPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) return showMsg('Enter your email first.', 'err');
+
+  const { error } = await DB.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://calorie-pro.vercel.app/login.html'
+  });
+  if (error) return showMsg(error.message, 'err');
+  showMsg('✅ Reset link sent to your email!', 'ok');
+}
+</script>
+</body>
+</html>
