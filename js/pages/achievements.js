@@ -1,0 +1,12 @@
+// =========================================================
+// PAGE: ACHIEVEMENTS
+// =========================================================
+function pgAch(){
+  const p=el('div',{class:'page'});const unl=S.achiev.length;const totalXP=S.achiev.reduce((s,id)=>{const a=ACHIEVEMENTS.find(x=>x.id===id);return s+(a?a.xp:0);},0);
+  p.appendChild(el('div',{style:{marginBottom:'13px'}},el('span',{class:'badge bdg-pu',style:{marginBottom:'7px',display:'inline-flex'}},__('achievements')),el('h1',{class:'h1'},__('achievements'))));
+  const sc=el('div',{class:'card card-pu',style:{textAlign:'center',padding:'22px 15px',marginBottom:'13px'}});
+  sc.appendChild(el('div',{style:{marginBottom:'8px',display:'flex',justifyContent:'center'}},saloEl(unl>=ACHIEVEMENTS.length?'celebrating':unl>0?'thumbsup':'encouraging',{size:64,className:'salo-bob'})));sc.appendChild(el('div',{style:{fontSize:'34px',fontWeight:'900',lineHeight:'1'}},unl+' / '+ACHIEVEMENTS.length));sc.appendChild(el('div',{style:{fontSize:'11px',color:'var(--tx2)',letterSpacing:'1px',textTransform:'uppercase',marginTop:'5px'}},'Achievements Unlocked'));sc.appendChild(el('div',{style:{fontSize:'16px',fontWeight:'700',color:'var(--pu2)',marginTop:'9px'}},'⭐ '+fmt(totalXP)+' '+__('xp_pts')));
+  const lvl=getLevel();const stgt=S.streak.count<7?7:S.streak.count<30?30:100;
+  sc.appendChild(el('div',{style:{marginTop:'11px'}},el('div',{class:'fb',style:{fontSize:'11px',color:'var(--tx2)',marginBottom:'4px'}},el('span','🔥 '+S.streak.count+' / '+stgt+' days'),el('span',Math.round(S.streak.count/stgt*100)+'%')),el('div',{class:'pbar'},el('div',{class:'pfil pf-yl',style:{width:Math.min(100,Math.round(S.streak.count/stgt*100))+'%'}}))));p.appendChild(sc);
+  ACHIEVEMENTS.forEach(a=>{const done=S.achiev.includes(a.id);const card=el('div',{class:'achc'+(done?' done':'')});card.appendChild(el('div',{class:'achi'+(done?'':' lock')},a.icon));const info=el('div',{style:{flex:'1'}});info.appendChild(el('div',{style:{fontSize:'14px',fontWeight:'700'}},a.name));info.appendChild(el('div',{style:{fontSize:'11px',color:'var(--tx2)',marginTop:'2px'}},a.desc));info.appendChild(el('div',{style:{fontSize:'11px',color:'var(--pu2)',marginTop:'3px',fontWeight:'600'}},'+'+a.xp+' XP'));card.appendChild(info);card.appendChild(el('div',{class:'achs '+(done?'done':'lock')},done?'✓ '+__('unlock'):'🔒 '+__('locked')));p.appendChild(card);});return p;
+}

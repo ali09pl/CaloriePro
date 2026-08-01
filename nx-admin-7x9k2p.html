@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Nexora Studio — Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{background:#060d18;color:#e2e8f0;min-height:100dvh;overflow-x:hidden}
+
+body::before{content:'';position:fixed;top:-30%;left:-20%;width:600px;height:600px;background:radial-gradient(circle,rgba(139,92,246,.1) 0%,transparent 70%);pointer-events:none}
+body::after{content:'';position:fixed;bottom:-20%;right:-20%;width:500px;height:500px;background:radial-gradient(circle,rgba(59,130,246,.08) 0%,transparent 70%);pointer-events:none}
+
+/* ── LOGIN SCREEN ── */
+#login-screen{
+  position:fixed;inset:0;z-index:999;
+  display:flex;align-items:center;justify-content:center;
+  background:#060d18;padding:20px;
+}
+.login-box{
+  width:100%;max-width:380px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:24px;padding:36px 28px;
+  backdrop-filter:blur(20px);
+  position:relative;z-index:1;
+}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-icon{
+  width:56px;height:56px;
+  background:linear-gradient(135deg,#6d28d9,#8b5cf6);
+  border-radius:16px;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:26px;
+  box-shadow:0 6px 24px rgba(139,92,246,.45);
+  margin-bottom:14px;
+}
+.login-title{font-size:20px;font-weight:900;color:#a78bfa;letter-spacing:-.5px}
+.login-sub{font-size:12px;color:#3a5878;margin-top:4px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.login-field{margin-bottom:14px}
+.login-lbl{display:block;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#3a5878;margin-bottom:6px}
+.login-inp{
+  width:100%;background:rgba(255,255,255,.06);
+  border:1.5px solid rgba(255,255,255,.08);
+  border-radius:11px;padding:13px 15px;
+  color:#e2e8f0;font-size:15px;
+  outline:none;font-family:inherit;
+  transition:border-color .2s,box-shadow .2s;
+}
+.login-inp:focus{border-color:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.14)}
+.login-inp::placeholder{color:#3a5878}
+.login-err{
+  background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);
+  color:#f87171;border-radius:10px;padding:10px 14px;
+  font-size:13px;margin-bottom:12px;display:none;
+}
+.login-err.show{display:block}
+.login-btn{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,#6d28d9,#8b5cf6);
+  color:#fff;border:none;border-radius:12px;
+  font-size:15px;font-weight:700;
+  cursor:pointer;font-family:inherit;
+  transition:transform .18s,box-shadow .18s;
+  box-shadow:0 4px 18px rgba(139,92,246,.35);
+}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(139,92,246,.45)}
+.login-btn:active{transform:scale(.97)}
+.login-btn:disabled{opacity:.5;cursor:default;transform:none}
+.lock-icon{text-align:center;font-size:13px;color:#3a5878;margin-top:16px}
+
+/* ── ADMIN PANEL ── */
+#admin-panel{display:none}
+
+.topbar{
+  position:sticky;top:0;z-index:100;
+  height:56px;padding:0 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(6,13,24,.92);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  backdrop-filter:blur(20px);
+}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:36px;height:36px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 3px 14px rgba(139,92,246,.4)}
+.brand-name{font-size:16px;font-weight:900;letter-spacing:-.5px;color:#a78bfa}
+.brand-sub{font-size:10px;color:#3a5878;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.btn-logout{padding:7px 14px;border-radius:9px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s}
+.btn-logout:hover{background:rgba(239,68,68,.2)}
+
+.wrap{max-width:900px;margin:0 auto;padding:24px 16px 60px}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+.stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:16px;text-align:center}
+.stat-v{font-size:28px;font-weight:900;color:#a78bfa}
+.stat-l{font-size:11px;color:#3a5878;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:22px;margin-bottom:16px}
+.card-title{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#3a5878;display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.card-title::before{content:'';width:14px;height:2px;background:linear-gradient(135deg,#7c3aed,#8b5cf6);border-radius:2px}
+
+.field{margin-bottom:14px}
+.lbl{display:block;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#3a5878;margin-bottom:6px}
+.inp,.sel,.textarea{width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.08);border-radius:11px;padding:12px 15px;color:#e2e8f0;font-size:14px;outline:none;font-family:inherit;transition:border-color .2s,box-shadow .2s}
+.inp:focus,.sel:focus,.textarea:focus{border-color:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.14)}
+.inp::placeholder,.textarea::placeholder{color:#3a5878}
+.textarea{resize:vertical;min-height:120px;line-height:1.6}
+.sel{cursor:pointer}.sel option{background:#0d1a2e}
+
+.btn-pr{padding:13px 22px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform .18s,box-shadow .18s;box-shadow:0 4px 18px rgba(139,92,246,.35);display:inline-flex;align-items:center;gap:8px}
+.btn-pr:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(139,92,246,.45)}
+.btn-pr:active{transform:scale(.97)}
+.btn-pr:disabled{opacity:.5;cursor:default;transform:none}
+.btn-w{width:100%}
+
+.btn-sm{padding:7px 13px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:#e2e8f0;transition:all .18s}
+.btn-sm:hover{background:rgba(255,255,255,.12)}
+
+.clients-list{display:flex;flex-direction:column;gap:8px}
+.client-row{display:flex;align-items:center;gap:12px;padding:12px 15px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;transition:border-color .18s}
+.client-row:hover{border-color:rgba(139,92,246,.3)}
+.client-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6d28d9,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0}
+.client-info{flex:1;min-width:0}
+.client-email{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.client-date{font-size:11px;color:#3a5878;margin-top:2px}
+.client-actions{display:flex;gap:6px;flex-shrink:0}
+
+.msg-row{padding:12px 15px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;margin-bottom:8px}
+.msg-to{font-size:11px;color:#7a9abb;margin-bottom:4px}
+.msg-subj{font-size:13px;font-weight:700;margin-bottom:3px}
+.msg-body{font-size:12px;color:#7a9abb;line-height:1.6;white-space:pre-wrap}
+.msg-date{font-size:10px;color:#3a5878;margin-top:6px}
+
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-10px);background:#0d1a2e;border:1px solid rgba(139,92,246,.4);border-radius:12px;padding:12px 20px;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.4);opacity:0;transition:all .25s;z-index:9999;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:rgba(16,185,129,.4);color:#34d399}
+.toast.err{border-color:rgba(239,68,68,.4);color:#f87171}
+
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.empty{text-align:center;padding:32px;color:#3a5878;font-size:13px}
+
+.tabs{display:flex;gap:6px;margin-bottom:20px}
+.tab{padding:9px 18px;border-radius:10px;font-size:13px;font-weight:700;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#7a9abb;cursor:pointer;transition:all .18s;font-family:inherit}
+.tab.on{background:rgba(139,92,246,.15);border-color:rgba(139,92,246,.35);color:#a78bfa}
+
+@media(max-width:480px){.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:span 2}}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN SCREEN ══ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-icon">⚡</div>
+      <div class="login-title">Nexora Studio</div>
+      <div class="login-sub">Admin Access</div>
+    </div>
+    <div class="login-err" id="login-err">Wrong password. Try again.</div>
+    <div class="login-field">
+      <label class="login-lbl">Admin Password</label>
+      <input class="login-inp" type="password" id="admin-pass" placeholder="Enter password..." onkeydown="if(event.key==='Enter')checkPassword()"/>
+    </div>
+    <button class="login-btn" id="login-btn" onclick="checkPassword()">🔐 Enter Admin Panel</button>
+    <div class="lock-icon">🔒 Restricted access only</div>
+  </div>
+</div>
+
+<!-- ══ ADMIN PANEL ══ -->
+<div id="admin-panel">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <div class="brand-name">Nexora Studio</div>
+        <div class="brand-sub">Admin Panel</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Logout</button>
+  </div>
+
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat"><div class="stat-v" id="stat-clients">—</div><div class="stat-l">Total Clients</div></div>
+      <div class="stat"><div class="stat-v" id="stat-sent">—</div><div class="stat-l">Emails Sent</div></div>
+      <div class="stat"><div class="stat-v" id="stat-today">—</div><div class="stat-l">Joined Today</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="switchTab('send')">📧 Send Email</button>
+      <button class="tab" onclick="switchTab('clients')">👥 Clients</button>
+      <button class="tab" onclick="switchTab('history')">📋 History</button>
+    </div>
+
+    <!-- SEND -->
+    <div id="tab-send">
+      <div class="card">
+        <div class="card-title">Send Email to Client</div>
+        <div class="field"><label class="lbl">Select Client</label><select class="sel" id="send-to"><option value="">— Select client —</option></select></div>
+        <div class="field"><label class="lbl">Or Enter Email Manually</label><input class="inp" type="email" id="send-to-manual" placeholder="client@example.com"/></div>
+        <div class="field"><label class="lbl">Subject</label><input class="inp" type="text" id="send-subject" placeholder="Your subject here..."/></div>
+        <div class="field"><label class="lbl">Message</label><textarea class="textarea" id="send-body" placeholder="Write your message here..."></textarea></div>
+        <button class="btn-pr btn-w" id="btn-send" onclick="sendEmail()">
+          <span id="btn-send-text">📧 Send Email</span>
+          <span id="btn-send-spin" style="display:none"><span class="spin"></span></span>
+        </button>
+      </div>
+      <div class="card">
+        <div class="card-title">Quick Templates</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn-sm" onclick="useTemplate('welcome')">👋 Welcome Message</button>
+          <button class="btn-sm" onclick="useTemplate('update')">🚀 App Update</button>
+          <button class="btn-sm" onclick="useTemplate('promo')">🎁 Special Offer</button>
+          <button class="btn-sm" onclick="useTemplate('reminder')">🔔 Reminder</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div id="tab-clients" style="display:none">
+      <div class="card">
+        <div class="card-title">All Clients</div>
+        <div class="clients-list" id="clients-list"><div class="empty">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="tab-history" style="display:none">
+      <div class="card">
+        <div class="card-title">Sent Emails History</div>
+        <div id="history-list"><div class="empty">No emails sent yet.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL  = (window.__ENV__ && window.__ENV__.VITE_SUPABASE_URL)
+  || 'https://momnfuwtgzsatptkntgp.supabase.co';
+const SUPABASE_ANON = (window.__ENV__ && window.__ENV__.VITE_SUPABASE_ANON_KEY)
+  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vbW5mdXd0Z3pzYXRwdGtudGdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNDMxMjYsImV4cCI6MjA5MDYxOTEyNn0.lcuaL2wlDJ5mX5NOBq_O8Myt6t3rVAl2_nyMRMoklko';
+
+const { createClient } = supabase;
+const DB = createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: { storageKey: 'cp7_auth_token' }
+});
+
+var clients = [];
+var history = JSON.parse(localStorage.getItem('nx_history') || '[]');
+
+// Auth Guard — check admin on load
+DB.auth.getSession().then(function({ data }) {
+  if (!data.session) {
+    window.location.href = '/login.html';
+    return;
+  }
+  checkAdmin(data.session);
+});
+
+async function checkAdmin(session) {
+  try {
+    var result = await DB
+      .from('profiles')
+      .select('is_admin')
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (result.error || !result.data || !result.data.is_admin) {
+      document.getElementById('login-err').textContent = 'Access denied. Admins only.';
+      document.getElementById('login-err').classList.add('show');
+      await DB.auth.signOut();
+      setTimeout(function() { window.location.href = '/login.html'; }, 1500);
+      return;
+    }
+
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    init();
+  } catch (e) {
+    console.error('Admin check failed:', e);
+    window.location.href = '/login.html';
+  }
+}
+
+async function doLogout() {
+  await DB.auth.signOut();
+  window.location.href = '/login.html';
+}
+
+async function init() {
+  await loadClients();
+  renderStats();
+  renderHistory();
+}
+
+async function loadClients() {
+  try {
+    var sd = await DB.auth.getSession();
+    var session = sd.data ? sd.data.session : null;
+    if (!session) throw new Error('Not authenticated');
+
+    var res = await fetch('/api/admin/clients', {
+      headers: { 'Authorization': 'Bearer ' + session.access_token }
+    });
+
+    if (!res.ok) throw new Error('Failed to load clients');
+
+    var data = await res.json();
+    clients = data.clients || [];
+
+    renderClientsSelect();
+    renderClientsList();
+  } catch (e) {
+    console.warn('loadClients error:', e);
+    clients = [];
+    renderClientsSelect();
+    renderClientsList();
+  }
+}
+
+function renderStats() {
+  document.getElementById('stat-clients').textContent = clients.length || '0';
+  document.getElementById('stat-sent').textContent = history.length;
+  var today = new Date().toISOString().split('T')[0];
+  document.getElementById('stat-today').textContent = clients.filter(function(c) { return c.joinDate === today; }).length;
+}
+
+function renderClientsSelect() {
+  var sel = document.getElementById('send-to');
+  sel.innerHTML = '<option value="">— Select client —</option>';
+  clients.forEach(function(c) {
+    var opt = document.createElement('option');
+    opt.value = c.email;
+    opt.textContent = c.email;
+    sel.appendChild(opt);
+  });
+}
+
+function renderClientsList() {
+  var list = document.getElementById('clients-list');
+  if (!clients.length) {
+    list.innerHTML = '<div class="empty">No clients yet.</div>';
+    return;
+  }
+  list.innerHTML = clients.map(function(c) {
+    return '<div class="client-row">' +
+      '<div class="client-avatar">' + c.email[0].toUpperCase() + '</div>' +
+      '<div class="client-info">' +
+        '<div class="client-email">' + c.email + '</div>' +
+        '<div class="client-date">Joined: ' + c.joinDate + '</div>' +
+      '</div>' +
+      '<div class="client-actions">' +
+        '<button class="btn-sm" onclick="quickSend(' + "'" + c.email.replace(/'/g, "\'") + "'" + ')">📧 Email</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function switchTab(tab) {
+  ['send','clients','history'].forEach(function(t) {
+    document.getElementById('tab-'+t).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(function(b, i) {
+    b.classList.toggle('on', ['send','clients','history'][i] === tab);
+  });
+  if (tab === 'history') renderHistory();
+}
+
+function quickSend(email) {
+  switchTab('send');
+  document.getElementById('send-to-manual').value = email;
+}
+
+var TEMPLATES = {
+  welcome: {subject:'Welcome to CaloriePro! 🥗',body:"Hi there,\n\nWelcome to CaloriePro — your personal AI nutrition coach!\n\nWe're excited to have you on board.\n\nBest regards,\nNexora Studio Team"},
+  update: {subject:'CaloriePro — New Update 🚀',body:"Hi there,\n\nWe've just released a new update for CaloriePro!\n\nOpen the app to see the latest changes.\n\nBest regards,\nNexora Studio Team"},
+  promo: {subject:'Special Offer Just for You! 🎁',body:"Hi there,\n\nWe have a special offer just for you!\n\n[Describe your offer here]\n\nBest regards,\nNexora Studio Team"},
+  reminder: {subject:"Don't forget to log today! 🔔",body:"Hi there,\n\nJust a friendly reminder — log your meals today!\n\nConsistency is key 💪\n\nBest regards,\nNexora Studio Team"}
+};
+
+function useTemplate(key) {
+  var t = TEMPLATES[key];
+  document.getElementById('send-subject').value = t.subject;
+  document.getElementById('send-body').value = t.body;
+  switchTab('send');
+}
+
+async function sendEmail() {
+  var toSelect = document.getElementById('send-to').value;
+  var toManual = document.getElementById('send-to-manual').value.trim();
+  var to       = toManual || toSelect;
+  var subject  = document.getElementById('send-subject').value.trim();
+  var body     = document.getElementById('send-body').value.trim();
+
+  if (!to)      return showToast('Select or enter a recipient.', 'err');
+  if (!subject) return showToast('Subject is required.', 'err');
+  if (!body)    return showToast('Message is required.', 'err');
+
+  setLoading(true);
+  try {
+    var sd = await DB.auth.getSession();
+    var session = sd.data ? sd.data.session : null;
+    if (!session) throw new Error('Not authenticated');
+
+    var res = await fetch('/api/admin/send-email', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + session.access_token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ to: to, subject: subject, body: body })
+    });
+
+    var result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Failed to send');
+
+    history.unshift({ to: to, subject: subject, body: body, date: new Date().toISOString() });
+    localStorage.setItem('nx_history', JSON.stringify(history.slice(0,100)));
+    showToast('✅ Email sent!', 'ok');
+    renderStats();
+    document.getElementById('send-to').value = '';
+    document.getElementById('send-to-manual').value = '';
+    document.getElementById('send-subject').value = '';
+    document.getElementById('send-body').value = '';
+  } catch(e) {
+    showToast('❌ ' + (e.text || e.message || 'Failed to send'), 'err');
+  }
+  setLoading(false);
+}
+
+function renderHistory() {
+  var list = document.getElementById('history-list');
+  if (!history.length) { list.innerHTML = '<div class="empty">No emails sent yet.</div>'; return; }
+  list.innerHTML = history.map(function(m) {
+    return '<div class="msg-row">' +
+      '<div class="msg-to">To: ' + m.to + '</div>' +
+      '<div class="msg-subj">' + m.subject + '</div>' +
+      '<div class="msg-body">' + m.body.slice(0,120) + (m.body.length>120?'...':'') + '</div>' +
+      '<div class="msg-date">' + new Date(m.date).toLocaleString() + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function setLoading(on) {
+  document.getElementById('btn-send').disabled = on;
+  document.getElementById('btn-send-text').style.display = on ? 'none' : 'inline';
+  document.getElementById('btn-send-spin').style.display = on ? 'inline' : 'none';
+}
+
+var toastTimer;
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.className = 'toast'; }, 3000);
+}
+</script>
+</body>
+</html>
